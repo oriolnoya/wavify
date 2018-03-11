@@ -22,10 +22,14 @@ $('#myID').wavify({
   bones: 3,
   amplitude: 40,
   color: 'rgba(150, 97, 255, .8)',
-  speed: .25
+  speed: .25,
+  mode: 1
 });
 `
 
 ## Options
 
-Infos to come when free time is up :)
+Mode:
+- 1: only Top path
+- 2: only Bottom path
+- 3: both Top & Bottom path

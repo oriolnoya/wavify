@@ -21,7 +21,9 @@
             // Total number of articulation in wave
             bones: 3,
             // Color
-            color: 'rgba(255,255,255, 0.20)'
+            color: 'rgba(255,255,255, 0.20)',
+            // 1: only top, 2: only bottom, 3: top and bottom
+            mode: 1
         }, options );
 
         var wave = this,
@@ -36,7 +38,7 @@
         TweenLite.set(wave, {attr:{fill: settings.color}});
 
 
-        function drawPoints(factor) {
+        function topPoints(factor) {
             var points = [];
 
             for (var i = 0; i <= settings.bones; i++) {
@@ -50,11 +52,57 @@
             return points;
         }
 
-        function drawPath(points) {
-            var SVGString = 'M ' + points[0].x + ' ' + points[0].y;
+        function bottomPoints(factor) {
+            var points = [];
+
+            for (var i = settings.bones; i>= 0; i--) {
+                var x = i/settings.bones * width;
+                var _i = settings.bones - i;
+                var sinSeed = (factor + (_i + _i % settings.bones)) * settings.speed * 100;
+                var sinHeight = Math.sin(sinSeed / 100) * settings.amplitude;
+                var yPos = Math.sin(sinSeed / 100) * sinHeight - settings.height - settings.amplitude + height;
+                points.push({x: x, y: yPos});
+            }
+
+            return points;
+        }
+
+        function drawPaths(topPoints, bottomPoints) 
+        {
+            var SVGString = '';
+
+            if(settings.mode == 1 || settings.mode == 3)
+            {
+                SVGString += 'M ' + topPoints[0].x + ' ' + topPoints[0].y;
+                SVGString += drawPath(topPoints);
+            }
+            else
+            {
+                SVGString += 'M 0 0';
+                SVGString += ' L ' + width + ' 0';
+            }
+
+            if(settings.mode == 1)
+            {
+                SVGString += ' L ' + width + ' ' + height;
+                SVGString += ' L 0 ' + height + ' Z';
+            }
+            else
+            {
+                SVGString += ' L ' + bottomPoints[0].x + ' ' + bottomPoints[0].y;
+                SVGString += drawPath(bottomPoints, width);
+                SVGString += ' Z';
+            }
+
+            return SVGString;
+        }
+
+        function drawPath(points, offset = 0)
+        {
+            var SVGString = '';
 
             var cp0 = {
-                x: (points[1].x - points[0].x) / 2,
+                x: offset + (points[1].x - points[0].x) / 2,
                 y: (points[1].y - points[0].y) + points[0].y + (points[1].y - points[0].y)
             };
 
@@ -75,8 +123,6 @@
                 inverted = -inverted;
             }
 
-            SVGString += ' L ' + width + ' ' + height;
-            SVGString += ' L 0 ' + height + ' Z';
             return SVGString;
         }
 
@@ -95,7 +141,7 @@
                 var factor = totalTime*Math.PI;
                 TweenMax.to(wave, settings.speed, {
                     attr:{
-                        d: drawPath(drawPoints(factor))
+                        d: drawPaths(topPoints(factor), bottomPoints(factor))
                     },
                     ease: Power1.easeInOut
                 });
